@@ -55,17 +55,16 @@ public extension Element {
 
 		switch self {
 		case let .root(children):
-			let childrenWithContent = children.filter { $0.shouldRender() }
 
-			for (index, child) in childrenWithContent.enumerated() {
+			for (index, child) in children.enumerated() {
 				var context: OutputContext = []
-				if childrenWithContent.count == 1 {
+				if children.count == 1 {
 					context.insert(.isSingleChildInRoot)
 				}
 				if index == 0 {
 					context.insert(.isFirstChild)
 				}
-				if index == childrenWithContent.count - 1 {
+				if index == children.count - 1 {
 					context.insert(.isFinalChild)
 				}
 				result += child.toMarkdown(options: options, context: context, childIndex: index)
@@ -86,10 +85,10 @@ public extension Element {
 				}
 			case "br":
 				if !context.contains(.isFinalChild) {
-					result += "  \n"
+					result += "\n"
 				}
 				// TODO: strip whitespace on the next line of text, immediately after this linebreak
-			case "em":
+			case "em", "i":
 				var prefix: String = ""
 				var postfix: String = ""
 
@@ -102,7 +101,7 @@ public extension Element {
 
 				// I'd rather use _ here, but cmark-gfm has better behaviour with *
 				result += "\(prefix)*" + text + "*\(postfix)"
-			case "strong":
+			case "strong", "b":
 				var prefix: String = ""
 				var postfix: String = ""
 
@@ -187,14 +186,13 @@ public extension Element {
 		prefixPostfixBlock: ((String, String) -> Void)? = nil
 	) -> String {
 		var result = ""
-		let childrenWithContent = children.filter { $0.shouldRender() }
 
-		for (index, child) in childrenWithContent.enumerated() {
+		for (index, child) in children.enumerated() {
 			var context = context
 			if index == 0 {
 				context.insert(.isFirstChild)
 			}
-			if index == childrenWithContent.count - 1 {
+			if index == children.count - 1 {
 				context.insert(.isFinalChild)
 			}
 			result += child.toMarkdown(options: options, context: context, childIndex: index, prefixPostfixBlock: prefixPostfixBlock)
@@ -213,14 +211,5 @@ public extension Element {
 			}
 		}
 		return result
-	}
-
-	private func shouldRender() -> Bool {
-		switch self {
-		case .root, .text:
-			return !self.isEmpty()
-		case let .element(tag, _):
-			return tag.name.lowercased() == "br" || !self.isEmpty()
-		}
 	}
 }

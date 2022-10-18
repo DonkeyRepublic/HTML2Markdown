@@ -16,27 +16,6 @@ public enum Element {
 	case root(children: [Element])
 	case element(tag: Tag, children: [Element])
 	case text(text: String)
-
-	func isEmpty() -> Bool {
-		var result: Bool
-
-		switch self {
-		case let .root(children):
-			result = isEmpty(children)
-		case let .element(_, children):
-			result = isEmpty(children)
-		case let .text(text):
-			result = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-		}
-
-		return result
-	}
-
-	private func isEmpty(_ children: [Element]) -> Bool {
-		return children.reduce(into: true) { isEmpty, child in
-			isEmpty = isEmpty && child.isEmpty()
-		}
-	}
 }
 
 protocol Content {
@@ -359,11 +338,29 @@ final class HTMLElement: Content {
 public struct HTMLParser {
 	public init() {}
 	
-	public func parse(html: String) throws -> Element {
+    /// This function will not parse `html` string unless it contains at least one HTML tag.
+    public static func htmlToMarkdown(_ html:String) -> String {
+ 
+        guard let element:Element = try? HTMLParser().parse(html: html) else {
+            return html
+        }
+
+        // in case no HTML tags were found skip convertion
+        if case let Element.root(elements) = element,
+           elements.count == 1,
+           let firstElement = elements.first,
+           case Element.text = firstElement {
+            return html
+        }
+        
+        return element.toMarkdown(options: .unorderedListBullets)
+    }
+    
+    public func parse(html: String) throws -> Element {
 		let tokens = try Tokenizer().tokenize(html: html)
 		return try HTMLParser().parse(tokens: tokens)
 	}
-
+    
 	func parse(tokens: [TokenType]) throws -> Element {
 		let root = HTMLElement()
 
