@@ -117,8 +117,6 @@ final class MarkdownGeneratorTests: XCTestCase {
 					   "first\n\nsecond")
 	}
 
-
-
 	func testEmptySpan() throws {
 		let html = "<span class=\"theClass\"></span>"
 		XCTAssertEqual(HTMLParser.htmlToMarkdown(html),
